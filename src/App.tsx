@@ -8,6 +8,7 @@ import EmailCampaignPage from './pages/EmailCampaignPage'
 import DashboardPage from './pages/DashboardPage'
 import ClientPage from './pages/ClientPage'
 import FreelancerPage from './pages/FreelancerPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
