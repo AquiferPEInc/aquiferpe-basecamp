@@ -141,51 +141,88 @@ const hasValue = (v: unknown): boolean => {
 };
 
 const ResultItem = ({ hit }: { hit: EsHit }) => {
+  const src = (hit._source || {}) as any;
+  const fullName = `${src.first_name || ''} ${src.last_name || ''}`.trim() || 'Unnamed Freelancer';
+  const profileUrl = src.url || src.linkedin_url || src.linkedin_profile;
+
   return (
-    <div className="card border border-slate-200 p-4 rounded-lg shadow-sm">
-      <h3 className="text-base font-semibold text-slate-900 mb-2">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-          Score: {hit._score ? hit._score.toFixed(2) : 'N/A'}
-        </span>
-      </h3>
-      <div className="space-y-2 text-sm leading-relaxed break-words">
-        {(() => {
-          const src = { ...(hit._source || {}) } as Record<string, unknown>; // Simplified withComputedFields
-          // Manually add linkedin_profile if vanity exists
-          const vanity = src['vanity'];
-          if (typeof vanity === 'string' && vanity.trim()) {
-            src['linkedin_profile'] = `https://www.linkedin.com/in/${vanity.trim()}`;
-          }
-
-          return (           
-            <div className="space-y-2 text-sm leading-relaxed break-words">
-              {ORDER.map((key) => {
-                const value = (src as any)[key as string];
-
-                if (!hasValue(value)) return null;
-                const isPrimitive =
-                  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
-                return (
-                  <div key={key as string}>
-                    <strong className="mr-1">{humanLabel(key as string)}:</strong>
-                    {
-                      isPrimitive ? (
-                      <FieldValue 
-                        value={value} 
-                        fieldKey={key as string} 
-                        highlight={hit.highlight} 
-                      />
-                      
-                    ) : (
-                      <FieldValue value={value} />
-                    )
-                    }
-                  </div>
-                );
-              })}
+    <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-primary-700">
+            {profileUrl ? (
+              <a 
+                href={profileUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:underline flex items-center gap-2"
+              >
+                {fullName}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            ) : (
+              fullName
+            )}
+          </h3>
+          
+          {(src.location || src.state) && (
+            <div className="text-slate-600 mt-1 flex items-center gap-2">
+              <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>{[src.location, src.state].filter(Boolean).join(', ')}</span>
             </div>
-          );
-        })()}
+          )}
+        </div>
+        
+        {hit._score && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+            Match Score: {hit._score.toFixed(2)}
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        {hasValue(src.current_position) && (
+          <div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Position</span>
+            <p className="text-sm text-slate-800 mt-0.5">
+              <FieldValue value={src.current_position} fieldKey="current_position" highlight={hit.highlight} />
+            </p>
+          </div>
+        )}
+
+        {hasValue(src.about || src.summary) && (
+          <div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">About</span>
+            <div className="text-sm text-slate-700 mt-1 line-clamp-3">
+              <FieldValue value={src.about || src.summary} fieldKey={src.about ? "about" : "summary"} highlight={hit.highlight} />
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {hasValue(src.experience) && (
+            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Experience</span>
+              <div className="text-sm text-slate-800 mt-1">
+                <FieldValue value={src.experience} fieldKey="experience" highlight={hit.highlight} />
+              </div>
+            </div>
+          )}
+
+          {hasValue(src.license) && (
+            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">License</span>
+              <div className="text-sm text-slate-800 mt-1">
+                <FieldValue value={src.license} fieldKey="license" highlight={hit.highlight} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

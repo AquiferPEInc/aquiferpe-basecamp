@@ -35,7 +35,7 @@ export async function searchElasticsearch(query: string, selectedStates: string[
     throw new Error(`Search failed: ${error.message}`)
   }
 
-  const hits = (data || []).map(row => ({
+  const hits = (data || []).map((row: any) => ({
     _index: 'freelancer',
     _id: row.id.toString(),
     _source: {
@@ -43,8 +43,12 @@ export async function searchElasticsearch(query: string, selectedStates: string[
       first_name: row.first_name,
       last_name: row.last_name,
       title: row.title,
-      summary: row.summary,
-      location: row.location_name
+      location: row.location_name,
+      state: row.state,
+      about: row.about,
+      current_position: row.current_position,
+      experience: row.experience,
+      license: row.license
     }
   }))
 
