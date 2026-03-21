@@ -6,8 +6,7 @@ import { supabase } from '../lib/supabase'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [otp, setOtp] = useState('')
-  const [step, setStep] = useState<'login' | 'otp' | 'forgot-password'>('login')
+  const [step, setStep] = useState<'login' | 'forgot-password'>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -37,54 +36,6 @@ export default function LoginPage() {
       })
 
       if (error) throw error
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRequestOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setMessage(null)
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          redirectTo: window.location.origin
-        }
-      })
-
-      if (error) throw error
-
-      setStep('otp')
-      setMessage('Verification code sent to your email.')
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setMessage(null)
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'email',
-      })
-
-      if (error) throw error
-
-      navigate(from, { replace: true })
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -182,15 +133,6 @@ export default function LoginPage() {
                     Forgot your password?
                   </button>
                 </div>
-                <div className="text-sm">
-                  <button
-                    type="button"
-                    onClick={() => setStep('otp')}
-                    className="font-medium text-slate-600 hover:text-slate-500"
-                  >
-                    Use email code
-                  </button>
-                </div>
               </div>
 
               <div>
@@ -200,48 +142,6 @@ export default function LoginPage() {
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
                 >
                   {loading ? 'Signing in...' : 'Sign in'}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {step === 'otp' && (
-            <form className="space-y-6" onSubmit={handleRequestOtp}>
-              <div>
-                <label htmlFor="email-otp" className="block text-sm font-medium text-slate-700">
-                  Email address
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="email-otp"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setStep('login')}
-                  className="text-sm font-medium text-primary-600 hover:text-primary-500"
-                >
-                  Back to password login
-                </button>
-              </div>
-
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                >
-                  {loading ? 'Sending...' : 'Send Verification Code'}
                 </button>
               </div>
             </form>
