@@ -204,9 +204,9 @@ const ResultItem = ({ hit }: { hit: EsHit }) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div className="pt-2 space-y-4">
           {hasValue(src.experience) && (
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Experience</span>
               <div className="text-sm text-slate-800 mt-1">
                 <FieldValue value={src.experience} fieldKey="experience" highlight={hit.highlight} />
@@ -215,7 +215,7 @@ const ResultItem = ({ hit }: { hit: EsHit }) => {
           )}
 
           {hasValue(src.license) && (
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">License</span>
               <div className="text-sm text-slate-800 mt-1">
                 <FieldValue value={src.license} fieldKey="license" highlight={hit.highlight} />
