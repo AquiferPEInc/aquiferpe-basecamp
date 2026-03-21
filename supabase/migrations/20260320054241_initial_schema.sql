@@ -79,8 +79,7 @@ CREATE TABLE IF NOT EXISTS verification_codes (
 -- freelancer table (replacing Elasticsearch pe_linkedin index)
 CREATE TABLE IF NOT EXISTS freelancer (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
+    name VARCHAR(512),
     about TEXT,
     current_position TEXT,
     experience TEXT,

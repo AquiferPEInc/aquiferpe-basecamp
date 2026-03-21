@@ -20,15 +20,6 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const INPUT_FILE = path.join(__dirname, '../es_dump.json');
 const BATCH_SIZE = 500; // Supabase recommended batch insert size
 
-function parseName(fullName) {
-  if (!fullName) return { first: '', last: '' };
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length === 1) return { first: parts[0], last: '' };
-  
-  const last = parts.pop();
-  const first = parts.join(' ');
-  return { first, last };
-}
 
 async function importData() {
   console.log(`Starting to read data from: ${INPUT_FILE}`);
@@ -41,22 +32,17 @@ async function importData() {
     for (let i = 0; i < data.length; i += BATCH_SIZE) {
       const batch = data.slice(i, i + BATCH_SIZE);
       
-      const insertPayload = batch.map(record => {
-        const { first, last } = parseName(record.name);
-        
-        return {
-          first_name: first,
-          last_name: last,
-          about: record.about || null,
-          current_position: record.current_position || null,
-          experience: record.experience || null,
-          education: record.education || null,
-          license: record.license || null,
-          state: record.state || null,
-          location_name: record.location || null,
-          linkedin_url: record.vanity ? `https://linkedin.com/in/${record.vanity}` : null
-        };
-      });
+      const insertPayload = batch.map(record => ({
+        name: record.name,
+        about: record.about || null,
+        current_position: record.current_position || null,
+        experience: record.experience || null,
+        education: record.education || null,
+        license: record.license || null,
+        state: record.state || null,
+        location_name: record.location || null,
+        linkedin_url: record.vanity ? `https://linkedin.com/in/${record.vanity}` : null
+      }));
 
       console.log(`Inserting batch ${i} to ${i + batch.length}...`);
       

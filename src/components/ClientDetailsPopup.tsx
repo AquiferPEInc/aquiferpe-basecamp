@@ -698,7 +698,7 @@ export default function ClientDetailsPopup({ client, onClose, onClientUpdated, o
                   </div>
                   {!client.verified && (
                     <a
-                      href={`https://www.google.com/search?q=${encodeURIComponent(`${client.first_name} ${client.last_name} ${client.company_name || ''} LinkedIn`)}`}
+                       href={`https://www.google.com/search?q=${encodeURIComponent(`${client.first_name} ${client.last_name} ${client.company_name || ''} LinkedIn`)}`}
                       onClick={(e) => {
                         e.preventDefault()
                         openInWindow(`https://www.google.com/search?q=${encodeURIComponent(`${client.first_name} ${client.last_name} ${client.company_name || ''} LinkedIn`)}`)

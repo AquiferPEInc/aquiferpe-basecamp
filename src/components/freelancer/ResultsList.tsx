@@ -127,7 +127,7 @@ const hasValue = (v: unknown): boolean => {
 
 const ResultItem = ({ hit }: { hit: EsHit }) => {
   const src = (hit._source || {}) as any;
-  const fullName = `${src.first_name || ''} ${src.last_name || ''}`.trim() || 'Unnamed Freelancer';
+  const fullName = src.name?.trim() || 'Unnamed Freelancer';
   const profileUrl = src.url || src.linkedin_url || src.linkedin_profile;
 
   return (

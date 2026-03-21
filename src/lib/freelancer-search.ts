@@ -40,8 +40,7 @@ export async function searchElasticsearch(query: string, selectedStates: string[
     _id: row.id.toString(),
     _source: {
       url: row.linkedin_url,
-      first_name: row.first_name,
-      last_name: row.last_name,
+      name: row.name,
       title: row.title,
       location: row.location_name,
       state: row.state,
