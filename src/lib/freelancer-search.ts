@@ -35,12 +35,17 @@ export async function searchElasticsearch(query: string, selectedStates: string[
     throw new Error(`Search failed: ${error.message}`)
   }
 
+  if (data && data.length > 0) {
+    console.log('Freelancer data sample keys:', Object.keys(data[0]))
+    console.log('Freelancer name field value:', data[0].name)
+  }
+
   const hits = (data || []).map((row: any) => ({
     _index: 'freelancer',
     _id: row.id.toString(),
     _source: {
       url: row.linkedin_url,
-      name: row.name,
+      name: row.name || (row.first_name || row.last_name ? `${row.first_name || ''} ${row.last_name || ''}`.trim() : undefined),
       title: row.title,
       location: row.location_name,
       state: row.state,

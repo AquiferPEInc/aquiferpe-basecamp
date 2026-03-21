@@ -90,9 +90,10 @@ CREATE TABLE IF NOT EXISTS freelancer (
     linkedin_url VARCHAR(512),
     -- Create a generated TSVECTOR column for full-text search
     fts tsvector GENERATED ALWAYS AS (
-        setweight(to_tsvector('english', coalesce(about, '')), 'A') ||
-        setweight(to_tsvector('english', coalesce(current_position, '')), 'B') ||
-        setweight(to_tsvector('english', coalesce(experience, '')), 'C') ||
+        setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(about, '')), 'B') ||
+        setweight(to_tsvector('english', coalesce(current_position, '')), 'C') ||
+        setweight(to_tsvector('english', coalesce(experience, '')), 'D') ||
         setweight(to_tsvector('english', coalesce(education, '')), 'D') ||
         setweight(to_tsvector('english', coalesce(license, '')), 'D')
     ) STORED
