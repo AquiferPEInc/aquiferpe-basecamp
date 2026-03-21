@@ -21,6 +21,19 @@ function FreelancerSearch() {
   const [selectedStates, setSelectedStates] = useState<string[]>([])
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [countLoading, setCountLoading] = useState(true)
+  const [lastQuery, setLastQuery] = useState('')
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: ({ query, states }: { query: string; states: string[] }) => 
+      searchElasticsearch(query, states),
+    onSuccess: (data) => {
+      setResults(data)
+    },
+    onError: (err: any) => {
+      console.error(err)
+      alert(`Search Error: ${err.message}`)
+    },
+  })
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -34,19 +47,20 @@ function FreelancerSearch() {
       }
     }
     fetchCount()
-  }, [])
+    
+    // Initial fetch
+    mutate({ query: '', states: [] })
+  }, [mutate])
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (query: string) => searchElasticsearch(query, selectedStates),
-    onSuccess: (data) => {
-      setResults(data)
-    },
-    onError: (err: any) => {
-      // In a real app, you'd use a toast notification here
-      console.error(err)
-      alert(`Search Error: ${err.message}`)
-    },
-  })
+  // Re-trigger search when states change
+  useEffect(() => {
+    mutate({ query: lastQuery, states: selectedStates })
+  }, [selectedStates, mutate])
+
+  const handleSearch = (query: string) => {
+    setLastQuery(query)
+    mutate({ query, states: selectedStates })
+  }
 
   return (
     <div>
@@ -61,7 +75,7 @@ function FreelancerSearch() {
 
       <div className="card mb-8 max-w-2xl">
         <div className="flex flex-col items-left gap-4">
-          <SearchBar onSearch={mutate} loading={isPending} />
+          <SearchBar onSearch={handleSearch} loading={isPending} />
           <div className="w-full max-w-sm">
             <StateFilter
               selectedStates={selectedStates}

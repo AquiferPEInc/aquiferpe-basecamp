@@ -70,7 +70,7 @@ export default function ResultsList({ hits, took }: ResultsListProps) {
   const currentHits = hits.slice(startIndex, endIndex)
 
   return (
-    <div className="mt-8 space-y-4 w-full max-w-4xl mx-auto">
+    <div className="mt-8 space-y-4 w-full">
       <div className="flex items-center justify-between text-sm text-slate-600">
         <span>{hits.length} result{hits.length !== 1 ? 's' : ''} (showing {startIndex + 1}-{Math.min(endIndex, hits.length)})</span>
         {typeof took === 'number' && <span>Took {took} ms</span>}
@@ -116,21 +116,6 @@ export default function ResultsList({ hits, took }: ResultsListProps) {
     </div>
   )
 }
-
-const ORDER = [
-  'name',
-  'linkedin_profile',
-  'location',
-  'state',
-  'current_position',
-  'about',
-  'experience',
-  'license',
-  'education'
-] as const;
-
-const humanLabel = (key: string) =>
-  key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 const hasValue = (v: unknown): boolean => {
   if (v === null || v === undefined) return false;

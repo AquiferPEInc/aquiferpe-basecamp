@@ -16,7 +16,7 @@ export type EsSearchResponse<T = Record<string, unknown>> = {
   took?: number
 }
 
-export async function searchElasticsearch(query: string, selectedStates: string[] = [], size = 80): Promise<EsSearchResponse> {
+export async function searchElasticsearch(query: string, selectedStates: string[] = [], size = 100): Promise<EsSearchResponse> {
   const start = Date.now()
   let sbQuery = supabase.from('freelancer').select('*')
 
