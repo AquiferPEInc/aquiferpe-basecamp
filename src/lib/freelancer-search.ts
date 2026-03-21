@@ -18,18 +18,25 @@ export type EsSearchResponse<T = Record<string, unknown>> = {
 
 export async function searchElasticsearch(query: string, selectedStates: string[] = [], size = 100): Promise<EsSearchResponse> {
   const start = Date.now()
-  let sbQuery = supabase.from('freelancer').select('*')
+  let data, error;
 
   if (query) {
-    const formattedQuery = query.trim().split(/\s+/).join(' & ')
-    sbQuery = sbQuery.textSearch('fts', formattedQuery, { type: 'websearch' })
+    const { data: rpcData, error: rpcError } = await supabase.rpc('search_freelancers', {
+      search_query: query,
+      selected_states: selectedStates,
+      result_size: size
+    })
+    data = rpcData;
+    error = rpcError;
+  } else {
+    let sbQuery = supabase.from('freelancer').select('*')
+    if (selectedStates && selectedStates.length > 0) {
+      sbQuery = sbQuery.in('state', selectedStates)
+    }
+    const { data: selectData, error: selectError } = await sbQuery.limit(size)
+    data = selectData;
+    error = selectError;
   }
-
-  if (selectedStates && selectedStates.length > 0) {
-    sbQuery = sbQuery.in('state', selectedStates)
-  }
-
-  const { data, error } = await sbQuery.limit(size)
 
   if (error) {
     throw new Error(`Search failed: ${error.message}`)
@@ -53,7 +60,13 @@ export async function searchElasticsearch(query: string, selectedStates: string[
       current_position: row.current_position,
       experience: row.experience,
       license: row.license
-    }
+    },
+    _score: row.result_score,
+    highlight: row.headline_about || row.headline_experience || row.headline_license ? {
+      about: row.headline_about ? [row.headline_about] : undefined,
+      experience: row.headline_experience ? [row.headline_experience] : undefined,
+      license: row.headline_license ? [row.headline_license] : undefined
+    } : undefined
   }))
 
   return {
