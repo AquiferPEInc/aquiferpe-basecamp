@@ -43,12 +43,10 @@ export default function CompanyPage() {
   const [presets, setPresets] = useState<CompanyFilterPreset[]>([])
   const [showSavePreset, setShowSavePreset] = useState(false)
   const [newPresetName, setNewPresetName] = useState('')
-  const [acecChapterFilter, setAcecChapterFilter] = useState(() => {
-    return localStorage.getItem('company_acec_filter') || ''
-  })
+  const [acecChapterFilter, setAcecChapterFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
-  const [websiteFilter, setWebsiteFilter] = useState('true')
-  const [hasClientsFilter, setHasClientsFilter] = useState('true')
+  const [websiteFilter, setWebsiteFilter] = useState('')
+  const [hasClientsFilter, setHasClientsFilter] = useState('')
 
   const fetchCompanies = async (page: number, limit: number, search: string = '') => {
     setLoading(true)
@@ -245,7 +243,6 @@ export default function CompanyPage() {
 
   const handleAcecFilterChange = (value: string) => {
     setAcecChapterFilter(value)
-    localStorage.setItem('company_acec_filter', value)
     setCurrentPage(1)
   }
 
@@ -488,13 +485,13 @@ export default function CompanyPage() {
                 <option value="false">No Clients</option>
               </select>
             </div>
-            {(acecChapterFilter || cityFilter || websiteFilter !== 'true' || hasClientsFilter !== 'true') && (
+            {(acecChapterFilter || cityFilter || websiteFilter || hasClientsFilter) && (
               <button
                 onClick={() => {
                   handleAcecFilterChange('')
                   setCityFilter('')
-                  setWebsiteFilter('true')
-                  setHasClientsFilter('true')
+                  setWebsiteFilter('')
+                  setHasClientsFilter('')
                   setCurrentPage(1)
                 }}
                 className="text-sm text-red-600 hover:text-red-800 font-medium mb-1.5"
