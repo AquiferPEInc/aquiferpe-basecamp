@@ -30,7 +30,7 @@ export default function CompanyPage() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [checkedCompanies, setCheckedCompanies] = useState<Set<number>>(new Set())
   const [acecChapterFilter, setAcecChapterFilter] = useState(() => {
-    return localStorage.getItem('company_acec_filter') || 'Los Angeles County'
+    return localStorage.getItem('company_acec_filter') || ''
   })
   const [cityFilter, setCityFilter] = useState('')
   const [websiteFilter, setWebsiteFilter] = useState('true')
@@ -325,10 +325,10 @@ export default function CompanyPage() {
                 <option value="false">No Clients</option>
               </select>
             </div>
-            {(acecChapterFilter !== 'Los Angeles County' || cityFilter || websiteFilter !== 'true' || hasClientsFilter !== 'true') && (
+            {(acecChapterFilter || cityFilter || websiteFilter !== 'true' || hasClientsFilter !== 'true') && (
               <button
                 onClick={() => {
-                  handleAcecFilterChange('Los Angeles County')
+                  handleAcecFilterChange('')
                   setCityFilter('')
                   setWebsiteFilter('true')
                   setHasClientsFilter('true')
