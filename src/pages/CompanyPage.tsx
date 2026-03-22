@@ -35,7 +35,6 @@ export default function CompanyPage() {
   const [cityFilter, setCityFilter] = useState('')
   const [websiteFilter, setWebsiteFilter] = useState('true')
   const [hasClientsFilter, setHasClientsFilter] = useState('true')
-  const [excludeChapters, setExcludeChapters] = useState(true)
 
   const fetchCompanies = async (page: number, limit: number, search: string = '') => {
     setLoading(true)
@@ -68,9 +67,6 @@ export default function CompanyPage() {
           query = query.gt('client_count', 0)
         } else if (hasClientsFilter === 'false') {
           query = query.or('client_count.is.null,client_count.eq.0')
-        }
-        if (excludeChapters && !acecChapterFilter) {
-          query = query.not('acec_chapter', 'in', '("Affiliate","Non-Chapter")')
         }
       }
 
@@ -105,7 +101,7 @@ export default function CompanyPage() {
 
   useEffect(() => {
     fetchCompanies(currentPage, pageSize, searchQuery)
-  }, [currentPage, pageSize, searchQuery, acecChapterFilter, cityFilter, websiteFilter, hasClientsFilter, excludeChapters])
+  }, [currentPage, pageSize, searchQuery, acecChapterFilter, cityFilter, websiteFilter, hasClientsFilter])
 
   const fetchAcecChapterOptions = useCallback(async (search: string): Promise<string[]> => {
     try {
@@ -329,29 +325,13 @@ export default function CompanyPage() {
                 <option value="false">No Clients</option>
               </select>
             </div>
-            <div className="flex items-center space-x-2 h-9 mb-0.5">
-              <input
-                type="checkbox"
-                id="excludeChapters"
-                checked={excludeChapters}
-                onChange={(e) => {
-                  setExcludeChapters(e.target.checked)
-                  setCurrentPage(1)
-                }}
-                className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
-              />
-              <label htmlFor="excludeChapters" className="text-xs font-medium text-slate-700 cursor-pointer">
-                Exclude Affiliate/Non-Chapter
-              </label>
-            </div>
-            {(acecChapterFilter !== 'Los Angeles County' || cityFilter || websiteFilter !== 'true' || hasClientsFilter !== 'true' || !excludeChapters) && (
+            {(acecChapterFilter !== 'Los Angeles County' || cityFilter || websiteFilter !== 'true' || hasClientsFilter !== 'true') && (
               <button
                 onClick={() => {
                   handleAcecFilterChange('Los Angeles County')
                   setCityFilter('')
                   setWebsiteFilter('true')
                   setHasClientsFilter('true')
-                  setExcludeChapters(true)
                   setCurrentPage(1)
                 }}
                 className="text-sm text-red-600 hover:text-red-800 font-medium mb-1.5"
