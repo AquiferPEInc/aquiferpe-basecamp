@@ -7,11 +7,22 @@ import SearchableFilter from '../components/SearchableFilter'
 import MultiSelectFilter from '../components/MultiSelectFilter'
 import { openInWindow } from '../lib/window-open'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+
+interface CompanyFilterPreset {
+  id: string;
+  name: string;
+  acecChapter: string;
+  city: string;
+  website: string;
+  hasClients: string;
+}
 
 interface CompanyPaginatedResponse extends PaginatedResponse<Company> { }
 
 export default function CompanyPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -29,6 +40,9 @@ export default function CompanyPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [checkedCompanies, setCheckedCompanies] = useState<Set<number>>(new Set())
+  const [presets, setPresets] = useState<CompanyFilterPreset[]>([])
+  const [showSavePreset, setShowSavePreset] = useState(false)
+  const [newPresetName, setNewPresetName] = useState('')
   const [acecChapterFilter, setAcecChapterFilter] = useState(() => {
     return localStorage.getItem('company_acec_filter') || ''
   })
@@ -102,6 +116,36 @@ export default function CompanyPage() {
   useEffect(() => {
     fetchCompanies(currentPage, pageSize, searchQuery)
   }, [currentPage, pageSize, searchQuery, acecChapterFilter, cityFilter, websiteFilter, hasClientsFilter])
+
+  useEffect(() => {
+    const fetchPresets = async () => {
+      if (!user) return
+      try {
+        const { data, error } = await supabase
+          .from('company_filter_presets')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
+
+        if (error) throw error
+
+        if (data) {
+          setPresets(data.map(d => ({
+            id: d.id,
+            name: d.name,
+            acecChapter: d.acec_chapter || '',
+            city: d.city || '',
+            website: d.website || '',
+            hasClients: d.has_clients || ''
+          })))
+        }
+      } catch (err) {
+        console.error('Failed to load presets:', err)
+      }
+    }
+    
+    fetchPresets()
+  }, [user])
 
   const fetchAcecChapterOptions = useCallback(async (search: string): Promise<string[]> => {
     try {
@@ -205,6 +249,59 @@ export default function CompanyPage() {
     setCurrentPage(1)
   }
 
+  const handleSavePreset = async () => {
+    if (!newPresetName.trim() || !user) return
+
+    const name = newPresetName.trim()
+    const existing = presets.find(p => p.name.toLowerCase() === name.toLowerCase())
+    if (existing) {
+      alert("A preset with this name already exists.")
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('company_filter_presets')
+        .insert({
+          user_id: user.id,
+          name: name,
+          acec_chapter: acecChapterFilter,
+          city: cityFilter,
+          website: websiteFilter,
+          has_clients: hasClientsFilter
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        const newPreset: CompanyFilterPreset = {
+          id: data.id,
+          name: data.name,
+          acecChapter: data.acec_chapter || '',
+          city: data.city || '',
+          website: data.website || '',
+          hasClients: data.has_clients || ''
+        }
+        setPresets([...presets, newPreset].sort((a, b) => a.name.localeCompare(b.name)))
+        setNewPresetName('')
+        setShowSavePreset(false)
+      }
+    } catch (err) {
+      console.error('Failed to save preset:', err)
+      alert("Failed to save preset.")
+    }
+  }
+
+  const handleLoadPreset = (preset: CompanyFilterPreset) => {
+    handleAcecFilterChange(preset.acecChapter)
+    setCityFilter(preset.city)
+    setWebsiteFilter(preset.website)
+    setHasClientsFilter(preset.hasClients)
+    setCurrentPage(1)
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -274,6 +371,72 @@ export default function CompanyPage() {
         {/* Filters */}
         <div className="p-4 bg-slate-50 border-t border-b border-slate-200 mb-6 -mx-6 px-10 space-y-4">
           <div className="flex flex-wrap gap-6 items-end">
+            <div className="flex flex-col">
+              <label className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">
+                Presets
+              </label>
+              <div className="flex items-center space-x-2">
+                <select
+                  className="input py-1.5 text-sm w-44"
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val) {
+                      const preset = presets.find(p => p.id === val)
+                      if (preset) handleLoadPreset(preset)
+                      e.target.value = '' // Reset selector
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Load Preset...</option>
+                  {presets.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSavePreset(!showSavePreset)}
+                    className="text-sm text-primary-600 hover:text-primary-800 font-medium whitespace-nowrap mb-1.5"
+                  >
+                    Save
+                  </button>
+                  {showSavePreset && (
+                    <div className="absolute top-8 left-0 z-10 w-64 p-3 bg-white border border-slate-200 rounded-lg shadow-lg">
+                      <div className="flex flex-col space-y-2">
+                        <label className="text-xs font-semibold text-slate-700">Preset Name</label>
+                        <input
+                          type="text"
+                          className="input text-sm py-1.5"
+                          placeholder="e.g. Active LA Comps"
+                          value={newPresetName}
+                          onChange={(e) => setNewPresetName(e.target.value)}
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSavePreset()
+                            if (e.key === 'Escape') setShowSavePreset(false)
+                          }}
+                        />
+                        <div className="flex justify-between items-center pt-2">
+                          <button
+                            className="text-xs font-medium text-slate-500 hover:text-slate-700"
+                            onClick={() => setShowSavePreset(false)}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="bg-primary-600 text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-primary-700"
+                            onClick={handleSavePreset}
+                            disabled={!newPresetName.trim()}
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
             <MultiSelectFilter
               label="ACEC Chapter"
               value={acecChapterFilter}
