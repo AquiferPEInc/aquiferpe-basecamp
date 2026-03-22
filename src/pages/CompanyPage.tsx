@@ -45,7 +45,8 @@ export default function CompanyPage() {
       let query = supabase.from('company').select('*', { count: 'exact' })
 
       if (search.trim()) {
-        const queryStr = `%${search}%`
+        const safeSearch = search.replace(/"/g, '\\"')
+        const queryStr = `"%${safeSearch}%"`
         query = query.or(`company_name.ilike.${queryStr},acec_chapter.ilike.${queryStr},city.ilike.${queryStr}`)
       } else {
         if (acecChapterFilter) {

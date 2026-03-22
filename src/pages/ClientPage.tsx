@@ -61,7 +61,8 @@ export default function ClientPage() {
       let query = supabase.from('client').select('*, company(company_name)', { count: 'exact' })
 
       if (search.trim()) {
-        const queryStr = `%${search}%`
+        const safeSearch = search.replace(/"/g, '\\"')
+        const queryStr = `"%${safeSearch}%"`
         query = query.or(`first_name.ilike.${queryStr},last_name.ilike.${queryStr},email.ilike.${queryStr},title.ilike.${queryStr}`)
       }
 

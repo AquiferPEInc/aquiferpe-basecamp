@@ -42,10 +42,11 @@ export default function CompanySearch({ onSelectCompany, initialCompanyName, req
       setError(null)
       setIsOpen(true)
       try {
+        const safeSearch = searchTerm.replace(/"/g, '\\"')
         const { data, error: sbError } = await supabase
           .from('company')
           .select('*')
-          .or(`company_name.ilike.%${searchTerm}%,acec_chapter.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%`)
+          .or(`company_name.ilike."%${safeSearch}%",acec_chapter.ilike."%${safeSearch}%",city.ilike."%${safeSearch}%"`)
           .order('company_name', { ascending: true })
           .limit(25)
 
