@@ -8,6 +8,7 @@ import EmailCampaignPage from './pages/EmailCampaignPage'
 import DashboardPage from './pages/DashboardPage'
 import ClientPage from './pages/ClientPage'
 import FreelancerPage from './pages/FreelancerPage'
+import ArchitectPage from './pages/ArchitectPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/client" element={<ClientPage />} />
               <Route path="/freelancer" element={<FreelancerPage />} />
+              <Route path="/architect" element={<ArchitectPage />} />
             </Route>
           </Route>
         </Routes>
