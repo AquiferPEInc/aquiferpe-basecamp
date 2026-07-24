@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Architect } from '../types'
 import { supabase } from '../lib/supabase'
 import ArchitectDetailsPopup from '../components/ArchitectDetailsPopup'
@@ -364,7 +364,7 @@ export default function ArchitectPage() {
 
             <div className="flex flex-col">
               <label className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">
-                Connected
+                Connection Status
               </label>
               <select
                 className="input py-1.5 text-sm w-32"
@@ -375,9 +375,10 @@ export default function ArchitectPage() {
                 }}
               >
                 <option value="">All</option>
-                <option value="Connected">Connected</option>
-                <option value="Pending">Pending</option>
                 <option value="Not Connected">Not Connected</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Email">Email</option>
+                <option value="Phone">Phone</option>
               </select>
             </div>
 
@@ -537,7 +538,7 @@ export default function ArchitectPage() {
                   <th className="text-left py-3 px-4 text-slate-700 font-medium">Rating</th>
                   <th className="text-left py-3 px-4 text-slate-700 font-medium">Location</th>
                   <th className="text-left py-3 px-4 text-slate-700 font-medium">Typical Job Cost</th>
-                  <th className="text-left py-3 px-4 text-slate-700 font-medium">Connected</th>
+                  <th className="text-left py-3 px-4 text-slate-700 font-medium">Connection Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -653,10 +654,12 @@ export default function ArchitectPage() {
                       </td>
                       <td className="py-3 px-4 text-slate-700 text-sm">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          arc.linkedin_connected === 'Connected'
+                          arc.linkedin_connected === 'LinkedIn'
+                            ? 'bg-sky-100 text-sky-800'
+                            : arc.linkedin_connected === 'Email'
                             ? 'bg-emerald-100 text-emerald-800'
-                            : arc.linkedin_connected === 'Pending'
-                            ? 'bg-blue-100 text-blue-800'
+                            : arc.linkedin_connected === 'Phone'
+                            ? 'bg-indigo-100 text-indigo-800'
                             : 'bg-slate-100 text-slate-800'
                         }`}>
                           {arc.linkedin_connected || 'Not Connected'}

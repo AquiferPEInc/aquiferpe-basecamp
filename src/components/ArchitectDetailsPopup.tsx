@@ -33,8 +33,8 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
         })
       }
     } catch (err) {
-      console.error('Error updating LinkedIn Connected status:', err)
-      alert('Failed to update LinkedIn Connected status')
+      console.error('Error updating Connection status:', err)
+      alert('Failed to update Connection status')
     } finally {
       setUpdatingStatus(false)
     }
@@ -263,7 +263,7 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
               <div className="mt-4 pt-3 border-t border-slate-100 space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                    LinkedIn Connected Status
+                    Connection Status
                   </label>
                   <div className="relative">
                     <select
@@ -273,8 +273,9 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
                       disabled={updatingStatus}
                     >
                       <option value="Not Connected">Not Connected</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Connected">Connected</option>
+                      <option value="LinkedIn">LinkedIn</option>
+                      <option value="Email">Email</option>
+                      <option value="Phone">Phone</option>
                     </select>
                     {updatingStatus && (
                       <div className="absolute right-3 top-2.5">
