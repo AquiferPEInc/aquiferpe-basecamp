@@ -75,7 +75,6 @@ export default function ArchitectPage() {
   const [locationFilter, setLocationFilter] = useState('')
   const [radiusFilter, setRadiusFilter] = useState('25')
   const [minRating, setMinRating] = useState<string>('')
-  const [hasWebsiteFilter, setHasWebsiteFilter] = useState(false)
   const [hasFacebookFilter, setHasFacebookFilter] = useState(false)
   const [hasLinkedinFilter, setHasLinkedinFilter] = useState(false)
   const [linkedinConnectedFilter, setLinkedinConnectedFilter] = useState('')
@@ -113,7 +112,7 @@ export default function ArchitectPage() {
           max_distance_miles: parseFloat(radiusFilter),
           search_query: search.trim(),
           min_rating: minRating ? parseFloat(minRating) : null,
-          has_website: hasWebsiteFilter ? true : null,
+          has_website: null,
           has_facebook: hasFacebookFilter ? true : null,
           has_linkedin: hasLinkedinFilter ? true : null,
           linkedin_conn: linkedinConnectedFilter || '',
@@ -141,9 +140,6 @@ export default function ArchitectPage() {
             query = query.gte('review_score', Number(minRating))
           }
 
-          if (hasWebsiteFilter) {
-            query = query.not('website', 'is', null).neq('website', '').neq('website', 'http://').neq('website', 'N/A')
-          }
           if (hasFacebookFilter) {
             query = query.not('facebook_link', 'is', null).neq('facebook_link', '').neq('facebook_link', 'N/A')
           }
@@ -183,7 +179,7 @@ export default function ArchitectPage() {
 
   useEffect(() => {
     fetchArchitects(currentPage, pageSize, searchQuery)
-  }, [currentPage, pageSize, searchQuery, locationFilter, radiusFilter, minRating, hasWebsiteFilter, hasFacebookFilter, hasLinkedinFilter, linkedinConnectedFilter])
+  }, [currentPage, pageSize, searchQuery, locationFilter, radiusFilter, minRating, hasFacebookFilter, hasLinkedinFilter, linkedinConnectedFilter])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -390,18 +386,6 @@ export default function ArchitectPage() {
                 <label className="inline-flex items-center text-sm font-medium text-slate-700 cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    checked={hasWebsiteFilter}
-                    onChange={(e) => {
-                      setHasWebsiteFilter(e.target.checked)
-                      setCurrentPage(1)
-                    }}
-                    className="w-4 h-4 text-primary-600 rounded border-slate-300 mr-2"
-                  />
-                  Website
-                </label>
-                <label className="inline-flex items-center text-sm font-medium text-slate-700 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
                     checked={hasFacebookFilter}
                     onChange={(e) => {
                       setHasFacebookFilter(e.target.checked)
@@ -428,13 +412,12 @@ export default function ArchitectPage() {
 
 
 
-            {(locationFilter || radiusFilter !== '25' || minRating || hasWebsiteFilter || hasFacebookFilter || hasLinkedinFilter || linkedinConnectedFilter) && (
+            {(locationFilter || radiusFilter !== '25' || minRating || hasFacebookFilter || hasLinkedinFilter || linkedinConnectedFilter) && (
               <button
                 onClick={() => {
                   setLocationFilter('')
                   setRadiusFilter('25')
                   setMinRating('')
-                  setHasWebsiteFilter(false)
                   setHasFacebookFilter(false)
                   setHasLinkedinFilter(false)
                   setLinkedinConnectedFilter('')
