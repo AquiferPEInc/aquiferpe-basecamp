@@ -95,9 +95,106 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
     return stars
   }
 
+  const formatInlineMarkdown = (text: string): React.ReactNode[] => {
+    const tokens = text.split(/(\*\*.*?\*\*|\*.*?\*)/g)
+    return tokens.map((token, idx) => {
+      if (token.startsWith('**') && token.endsWith('**')) {
+        return (
+          <strong key={idx} className="font-semibold text-slate-900">
+            {token.slice(2, -2)}
+          </strong>
+        )
+      }
+      if (token.startsWith('*') && token.endsWith('*')) {
+        return (
+          <em key={idx} className="italic text-slate-700">
+            {token.slice(1, -1)}
+          </em>
+        )
+      }
+      return token
+    })
+  }
+
+  const renderSummaryContent = (summaryText: string | null | undefined): React.ReactNode => {
+    if (!summaryText || !summaryText.trim()) {
+      return (
+        <div className="text-center py-6 text-slate-400 text-sm italic bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+          No website summary available for this firm.
+        </div>
+      )
+    }
+
+    const rawLines = summaryText.split('\n')
+    const elements: React.ReactNode[] = []
+    let currentList: React.ReactNode[] = []
+
+    const flushList = (keyPrefix: string) => {
+      if (currentList.length > 0) {
+        elements.push(
+          <ul key={`ul-${keyPrefix}`} className="space-y-1.5 my-2">
+            {currentList}
+          </ul>
+        )
+        currentList = []
+      }
+    }
+
+    rawLines.forEach((line, index) => {
+      const trimmed = line.trim()
+
+      if (!trimmed || trimmed === '***' || line.startsWith('# Architecture Firm Profile:')) {
+        return
+      }
+
+      if (trimmed.startsWith('## ')) {
+        flushList(`h2-${index}`)
+        const title = trimmed.replace(/^##\s*/, '')
+        elements.push(
+          <div key={`h2-${index}`} className="mt-4 mb-2.5 pt-3 border-t border-slate-200 first:mt-0 first:pt-0 first:border-t-0">
+            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              {title}
+            </h4>
+          </div>
+        )
+      } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        const isSubBullet = line.startsWith('    ') || line.startsWith('\t') || line.startsWith('  *') || line.startsWith('  -')
+        const content = trimmed.replace(/^[-*]\s*/, '')
+        currentList.push(
+          <li
+            key={`li-${index}`}
+            className={`text-sm text-slate-600 flex items-start ${isSubBullet ? 'ml-5 text-slate-500' : 'ml-1'}`}
+          >
+            <span className={`inline-block mr-2 mt-1.5 flex-shrink-0 ${isSubBullet ? 'w-1.5 h-1.5 rounded-full bg-slate-400' : 'w-2 h-2 rounded-full bg-primary-500'}`} />
+            <span className="flex-1 leading-relaxed">{formatInlineMarkdown(content)}</span>
+          </li>
+        )
+      } else if (trimmed.startsWith('*   ') || trimmed.startsWith('    *')) {
+        const content = trimmed.replace(/^[*]\s*/, '').replace(/^\s*[*]\s*/, '')
+        currentList.push(
+          <li key={`li-${index}`} className="text-sm text-slate-500 flex items-start ml-5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 mr-2 mt-1.5 flex-shrink-0" />
+            <span className="flex-1 leading-relaxed">{formatInlineMarkdown(content)}</span>
+          </li>
+        )
+      } else {
+        flushList(`p-${index}`)
+        elements.push(
+          <p key={`p-${index}`} className="text-sm text-slate-600 my-1.5 leading-relaxed">
+            {formatInlineMarkdown(trimmed)}
+          </p>
+        )
+      }
+    })
+
+    flushList('end')
+
+    return <div className="space-y-1">{elements}</div>
+  }
+
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
           <div>
@@ -307,6 +404,26 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Firm Summary Section */}
+          <div className="space-y-3 pt-4 border-t border-slate-100">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Firm Overview & Summary
+              </span>
+              {architect.summary && (
+                <span className="text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Website Ingested
+                </span>
+              )}
+            </h3>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-200 text-slate-700 leading-relaxed text-sm">
+              {renderSummaryContent(architect.summary)}
             </div>
           </div>
         </div>
