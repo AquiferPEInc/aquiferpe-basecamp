@@ -77,6 +77,8 @@ export default function ArchitectPage() {
   const [minRating, setMinRating] = useState<string>('')
   const [hasFacebookFilter, setHasFacebookFilter] = useState(false)
   const [hasLinkedinFilter, setHasLinkedinFilter] = useState(false)
+  const [hasEmailFilter, setHasEmailFilter] = useState(false)
+  const [hasPhoneFilter, setHasPhoneFilter] = useState(false)
   const [linkedinConnectedFilter, setLinkedinConnectedFilter] = useState('')
 
   const [selectedArchitect, setSelectedArchitect] = useState<Architect | null>(null)
@@ -115,6 +117,8 @@ export default function ArchitectPage() {
           has_website: null,
           has_facebook: hasFacebookFilter ? true : null,
           has_linkedin: hasLinkedinFilter ? true : null,
+          has_email: hasEmailFilter ? true : null,
+          has_phone: hasPhoneFilter ? true : null,
           linkedin_conn: linkedinConnectedFilter || '',
           page_size: limit,
           page_offset: from
@@ -145,6 +149,12 @@ export default function ArchitectPage() {
           }
           if (hasLinkedinFilter) {
             query = query.not('linkedin_link', 'is', null).neq('linkedin_link', '').neq('linkedin_link', 'N/A')
+          }
+          if (hasEmailFilter) {
+            query = query.not('email', 'is', null).neq('email', '').neq('email', 'N/A')
+          }
+          if (hasPhoneFilter) {
+            query = query.or('phone.not.is.null,phone_number.not.is.null')
           }
           if (linkedinConnectedFilter) {
             if (linkedinConnectedFilter === 'Not Connected') {
@@ -179,7 +189,7 @@ export default function ArchitectPage() {
 
   useEffect(() => {
     fetchArchitects(currentPage, pageSize, searchQuery)
-  }, [currentPage, pageSize, searchQuery, locationFilter, radiusFilter, minRating, hasFacebookFilter, hasLinkedinFilter, linkedinConnectedFilter])
+  }, [currentPage, pageSize, searchQuery, locationFilter, radiusFilter, minRating, hasFacebookFilter, hasLinkedinFilter, hasEmailFilter, hasPhoneFilter, linkedinConnectedFilter])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -380,9 +390,33 @@ export default function ArchitectPage() {
 
             <div className="flex flex-col">
               <label className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">
-                Web Presense
+                Contact & Presence
               </label>
               <div className="flex flex-wrap gap-4 items-center h-[38px]">
+                <label className="inline-flex items-center text-sm font-medium text-slate-700 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={hasEmailFilter}
+                    onChange={(e) => {
+                      setHasEmailFilter(e.target.checked)
+                      setCurrentPage(1)
+                    }}
+                    className="w-4 h-4 text-primary-600 rounded border-slate-300 mr-2"
+                  />
+                  Has Email
+                </label>
+                <label className="inline-flex items-center text-sm font-medium text-slate-700 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={hasPhoneFilter}
+                    onChange={(e) => {
+                      setHasPhoneFilter(e.target.checked)
+                      setCurrentPage(1)
+                    }}
+                    className="w-4 h-4 text-primary-600 rounded border-slate-300 mr-2"
+                  />
+                  Has Phone
+                </label>
                 <label className="inline-flex items-center text-sm font-medium text-slate-700 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -410,14 +444,14 @@ export default function ArchitectPage() {
               </div>
             </div>
 
-
-
-            {(locationFilter || radiusFilter !== '25' || minRating || hasFacebookFilter || hasLinkedinFilter || linkedinConnectedFilter) && (
+            {(locationFilter || radiusFilter !== '25' || minRating || hasEmailFilter || hasPhoneFilter || hasFacebookFilter || hasLinkedinFilter || linkedinConnectedFilter) && (
               <button
                 onClick={() => {
                   setLocationFilter('')
                   setRadiusFilter('25')
                   setMinRating('')
+                  setHasEmailFilter(false)
+                  setHasPhoneFilter(false)
                   setHasFacebookFilter(false)
                   setHasLinkedinFilter(false)
                   setLinkedinConnectedFilter('')
