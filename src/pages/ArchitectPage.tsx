@@ -84,6 +84,20 @@ export default function ArchitectPage() {
   const [selectedArchitect, setSelectedArchitect] = useState<Architect | null>(null)
   const [checkedArchitects, setCheckedArchitects] = useState<Set<string>>(new Set())
 
+  const [contactModal, setContactModal] = useState<{
+    type: 'email' | 'phone'
+    value: string
+    title: string
+  } | null>(null)
+  const [contactCopied, setContactCopied] = useState(false)
+
+  const handleCopyContact = (text: string) => {
+    if (!text) return
+    navigator.clipboard.writeText(text)
+    setContactCopied(true)
+    setTimeout(() => setContactCopied(false), 2000)
+  }
+
 
 
   const fetchArchitects = async (page: number, limit: number, search: string = '') => {
@@ -551,7 +565,7 @@ export default function ArchitectPage() {
                     />
                   </th>
                   <th className="text-left py-3 px-4 text-slate-700 font-medium">Business Name</th>
-                  <th className="text-left py-3 px-4 text-slate-700 font-medium">Links</th>
+                  <th className="text-left py-3 px-4 text-slate-700 font-medium">Contacts</th>
                   <th className="text-left py-3 px-4 text-slate-700 font-medium">Rating</th>
                   <th className="text-left py-3 px-4 text-slate-700 font-medium">Location</th>
                   <th className="text-left py-3 px-4 text-slate-700 font-medium">Typical Job Cost</th>
@@ -581,7 +595,7 @@ export default function ArchitectPage() {
                         </button>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2.5">
                           {/* Website Link */}
                           {arc.website && arc.website !== 'http://' && arc.website !== 'N/A' ? (
                             <a
@@ -645,6 +659,54 @@ export default function ArchitectPage() {
                             <span className="text-slate-300 cursor-not-allowed" title="No LinkedIn Profile">
                               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                              </svg>
+                            </span>
+                          )}
+
+                          {/* Email Link */}
+                          {arc.email && arc.email !== 'N/A' ? (
+                            <button
+                              type="button"
+                              onClick={() => setContactModal({
+                                type: 'email',
+                                value: arc.email!,
+                                title: arc.business_name
+                              })}
+                              className="text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
+                              title={`View Email: ${arc.email}`}
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span className="text-slate-300 cursor-not-allowed" title="No Email">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                            </span>
+                          )}
+
+                          {/* Phone Link */}
+                          {(arc.phone || arc.phone_number) && arc.phone !== 'N/A' && arc.phone_number !== 'N/A' ? (
+                            <button
+                              type="button"
+                              onClick={() => setContactModal({
+                                type: 'phone',
+                                value: (arc.phone || arc.phone_number)!,
+                                title: arc.business_name
+                              })}
+                              className="text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                              title={`View Phone: ${arc.phone || arc.phone_number}`}
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span className="text-slate-300 cursor-not-allowed" title="No Phone">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                               </svg>
                             </span>
                           )}
@@ -732,6 +794,97 @@ export default function ArchitectPage() {
           </div>
         )}
       </div>
+
+      {contactModal && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setContactModal(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-200 cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                {contactModal.type === 'email' ? (
+                  <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-200">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-200">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg leading-snug">{contactModal.title}</h3>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                    {contactModal.type === 'email' ? 'Email Address' : 'Phone Number'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setContactModal(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="my-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+              <p className="text-base font-semibold text-slate-800 break-all select-all font-mono">
+                {contactModal.value}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleCopyContact(contactModal.value)}
+                className="flex-1 btn-primary py-2.5 flex items-center justify-center gap-2 text-sm font-semibold"
+              >
+                {contactCopied ? (
+                  <>
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>Copy to Clipboard</span>
+                  </>
+                )}
+              </button>
+
+              {contactModal.type === 'email' ? (
+                <a
+                  href={`mailto:${contactModal.value}`}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  Send Email
+                </a>
+              ) : (
+                <a
+                  href={`tel:${contactModal.value}`}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  Call Phone
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 text-center text-slate-500 text-sm">
         <p>Data loaded from Supabase.</p>

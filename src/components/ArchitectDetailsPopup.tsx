@@ -13,6 +13,14 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [currentProfileStatus, setCurrentProfileStatus] = useState(architect.status || 'Active')
   const [updatingProfileStatus, setUpdatingProfileStatus] = useState(false)
+  const [copiedEmail, setCopiedEmail] = useState(false)
+
+  const handleCopyEmail = (emailToCopy: string) => {
+    if (!emailToCopy) return
+    navigator.clipboard.writeText(emailToCopy)
+    setCopiedEmail(true)
+    setTimeout(() => setCopiedEmail(false), 2000)
+  }
 
   const handleStatusChange = async (newStatus: string) => {
     setUpdatingStatus(true)
@@ -275,13 +283,37 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
                   </div>
                 )}
                 {architect.email && architect.email !== 'N/A' && (
-                  <div className="text-sm text-slate-600 flex items-center">
-                    <svg className="w-4 h-4 mr-2.5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <a href={`mailto:${architect.email}`} className="text-primary-600 hover:underline hover:text-primary-800 break-all">
-                      {architect.email}
-                    </a>
+                  <div className="text-sm text-slate-600 flex items-center justify-between group">
+                    <div className="flex items-center min-w-0 mr-2">
+                      <svg className="w-4 h-4 mr-2.5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <a href={`mailto:${architect.email}`} className="text-primary-600 hover:underline hover:text-primary-800 break-all truncate">
+                        {architect.email}
+                      </a>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyEmail(architect.email!)}
+                      className="px-2 py-0.5 text-xs font-medium text-slate-600 hover:text-primary-700 hover:bg-primary-50 rounded border border-slate-200 hover:border-primary-300 transition-colors flex-shrink-0 flex items-center gap-1"
+                      title="Copy email to clipboard"
+                    >
+                      {copiedEmail ? (
+                        <>
+                          <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-emerald-700">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 )}
                 {architect.website && architect.website !== 'http://' && architect.website !== 'N/A' && (
@@ -432,11 +464,37 @@ export default function ArchitectDetailsPopup({ architect, onClose, onUpdate }: 
                 </svg>
                 Firm Overview & Summary
               </span>
-              {architect.summary && (
-                <span className="text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  Website Ingested
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {architect.email && architect.email !== 'N/A' && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopyEmail(architect.email!)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-2.5 py-1 rounded-md transition-colors"
+                    title={`Copy email: ${architect.email}`}
+                  >
+                    {copiedEmail ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-emerald-700">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span>Copy Email</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                {architect.summary && (
+                  <span className="text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                    Website Ingested
+                  </span>
+                )}
+              </div>
             </h3>
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-200 text-slate-700 leading-relaxed text-sm">
               {renderSummaryContent(architect.summary)}
