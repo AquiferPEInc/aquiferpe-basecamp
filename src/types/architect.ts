@@ -15,6 +15,8 @@ export interface Architect {
   status: string
   linkedin_connected?: string | null
   summary?: string | null
+  email?: string | null
+  phone?: string | null
   created_at: string
   updated_at: string
 }
