@@ -199,7 +199,7 @@ const hasValue = (v: unknown): boolean => {
   return true;
 };
 
-const PREVIEW_LENGTH = 200;
+const PREVIEW_LENGTH = 250;
 
 const ExpandableField = ({ value, fieldKey, highlight }: { value: unknown; fieldKey?: string; highlight?: Record<string, string[]> }) => {
   const [expanded, setExpanded] = useState(false);
@@ -328,7 +328,7 @@ const ResultItem = ({ hit, onOpenAbstract }: { hit: EsHit; onOpenAbstract: (name
             <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">License</span>
               <div className="text-sm text-slate-800 mt-1">
-                <FieldValue value={src.license} fieldKey="license" highlight={hit.highlight} />
+                <ExpandableField value={src.license} fieldKey="license" highlight={hit.highlight} />
               </div>
             </div>
           )}
