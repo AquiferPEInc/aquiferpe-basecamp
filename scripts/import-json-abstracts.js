@@ -9,11 +9,11 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://mriyerznhngrgejlmtdx.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseKey) {
-  console.error("Missing Supabase API key in environment.");
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment. The service role key is required to bypass RLS for this bulk update.');
   process.exit(1);
 }
 
@@ -32,7 +32,7 @@ async function importAbstracts() {
   const files = fs.readdirSync(JSON_DIR).filter(f => f.endsWith('.json') && !f.startsWith('.'));
   console.log(`Found ${files.length} profile JSON files.`);
 
-  const recordsWithAbstract = [];
+  const records = [];
 
   for (const file of files) {
     try {
@@ -40,20 +40,13 @@ async function importAbstracts() {
       const content = fs.readFileSync(filePath, 'utf8');
       const data = JSON.parse(content);
 
-      const abstractText = (data.abstract || data.about || '').trim();
+      const abstractText = (data.abstract || '').trim();
       if (abstractText) {
         const vanity = data.vanity || file.replace(/\.json$/, '');
-        recordsWithAbstract.push({
+        records.push({
           linkedin_url: `https://linkedin.com/in/${vanity}`,
-          vanity: vanity,
           name: data.name || null,
-          about: abstractText,
-          current_position: data.current_position || null,
-          experience: data.experience || null,
-          education: data.education || null,
-          license: data.license || null,
-          state: data.state || null,
-          location_name: data.location || null
+          abstract: abstractText
         });
       }
     } catch (err) {
@@ -61,80 +54,72 @@ async function importAbstracts() {
     }
   }
 
-  console.log(`Profiles with valid abstracts: ${recordsWithAbstract.length} / ${files.length}`);
+  console.log(`Profiles with a non-empty abstract: ${records.length} / ${files.length}`);
 
   let updatedCount = 0;
-  let insertedCount = 0;
+  let unmatchedCount = 0;
   let failedCount = 0;
+  const unmatched = [];
 
-  for (let i = 0; i < recordsWithAbstract.length; i += BATCH_SIZE) {
-    const batch = recordsWithAbstract.slice(i, i + BATCH_SIZE);
-    
-    // Process updates concurrently in small chunks to maximize speed
-    const updatePromises = batch.map(async (record) => {
-      // First try matching by linkedin_url
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
+
+    const results = await Promise.all(batch.map(async (record) => {
       const { data: updateData, error: updateError } = await supabase
         .from('freelancer')
-        .update({ about: record.about })
+        .update({ abstract: record.abstract })
         .eq('linkedin_url', record.linkedin_url)
         .select('id');
 
-      if (!updateError && updateData && updateData.length > 0) {
-        return { success: true, action: 'update' };
+      if (updateError) {
+        console.warn(`Update failed for ${record.linkedin_url}:`, updateError.message);
+        return { status: 'failed' };
+      }
+      if (updateData && updateData.length > 0) {
+        return { status: 'updated' };
       }
 
-      // If no record matched by linkedin_url, try matching by name
       if (record.name) {
         const { data: nameMatch, error: nameError } = await supabase
           .from('freelancer')
-          .update({ about: record.about })
+          .update({ abstract: record.abstract })
           .eq('name', record.name)
           .select('id');
 
-        if (!nameError && nameMatch && nameMatch.length > 0) {
-          return { success: true, action: 'update' };
+        if (nameError) {
+          console.warn(`Name-match update failed for ${record.name}:`, nameError.message);
+          return { status: 'failed' };
+        }
+        if (nameMatch && nameMatch.length > 0) {
+          return { status: 'updated' };
         }
       }
 
-      // If record still not found, insert it as a new freelancer
-      const { error: insertError } = await supabase
-        .from('freelancer')
-        .insert({
-          name: record.name,
-          about: record.about,
-          current_position: record.current_position,
-          experience: record.experience,
-          education: record.education,
-          license: record.license,
-          state: record.state,
-          location_name: record.location_name,
-          linkedin_url: record.linkedin_url
-        });
+      return { status: 'unmatched', record };
+    }));
 
-      if (insertError) {
-        console.warn(`Failed to update/insert record for ${record.linkedin_url}:`, insertError.message);
-        return { success: false };
+    for (const r of results) {
+      if (r.status === 'updated') updatedCount++;
+      else if (r.status === 'failed') failedCount++;
+      else {
+        unmatchedCount++;
+        unmatched.push(r.record.linkedin_url);
       }
-      return { success: true, action: 'insert' };
-    });
+    }
 
-    const results = await Promise.all(updatePromises);
-    const updates = results.filter(r => r.success && r.action === 'update').length;
-    const inserts = results.filter(r => r.success && r.action === 'insert').length;
-    
-    updatedCount += updates;
-    insertedCount += inserts;
-    failedCount += (results.length - updates - inserts);
-
-    if ((i + BATCH_SIZE) % 1000 === 0 || (i + BATCH_SIZE) >= recordsWithAbstract.length) {
-      console.log(`Processed ${Math.min(i + BATCH_SIZE, recordsWithAbstract.length)} / ${recordsWithAbstract.length} (Updated: ${updatedCount}, Inserted: ${insertedCount}, Failed: ${failedCount})`);
+    if ((i + BATCH_SIZE) % 1000 === 0 || (i + BATCH_SIZE) >= records.length) {
+      console.log(`Processed ${Math.min(i + BATCH_SIZE, records.length)} / ${records.length} (Updated: ${updatedCount}, Unmatched: ${unmatchedCount}, Failed: ${failedCount})`);
     }
   }
 
   console.log(`\nImport abstracts completed!`);
   console.log(`Updated: ${updatedCount}`);
-  console.log(`Inserted: ${insertedCount}`);
+  console.log(`Unmatched (no existing freelancer row): ${unmatchedCount}`);
   console.log(`Failed: ${failedCount}`);
+  if (unmatched.length > 0) {
+    fs.writeFileSync(path.join(__dirname, 'unmatched-abstracts.json'), JSON.stringify(unmatched, null, 2));
+    console.log(`Unmatched linkedin_urls written to scripts/unmatched-abstracts.json`);
+  }
 }
 
 importAbstracts();
