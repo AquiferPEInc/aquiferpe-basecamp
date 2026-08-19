@@ -6,6 +6,11 @@ interface ResultsListProps {
   took?: number
 }
 
+interface AbstractModalData {
+  name: string
+  abstract: string
+}
+
 const FieldValue = ({ value, fieldKey, highlight }: { value: unknown; fieldKey?: string; highlight?: Record<string, string[]> }) => {
   if (typeof value === 'string') {
     value = value.replace(/_linebreak_/g, '\n');
@@ -50,11 +55,22 @@ const FieldValue = ({ value, fieldKey, highlight }: { value: unknown; fieldKey?:
 
 export default function ResultsList({ hits, took }: ResultsListProps) {
   const [currentPage, setCurrentPage] = useState(1)
+  const [activeModal, setActiveModal] = useState<AbstractModalData | null>(null)
   const resultsPerPage = 5
   
   useEffect(() => {
     setCurrentPage(1)
   }, [hits])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveModal(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
   
   if (!hits?.length) {
     return (
@@ -77,7 +93,11 @@ export default function ResultsList({ hits, took }: ResultsListProps) {
       </div>
       <hr className="border-t border-slate-200" />
       {currentHits.map((hit) => (
-        <ResultItem key={hit._id} hit={hit} />
+        <ResultItem 
+          key={hit._id} 
+          hit={hit} 
+          onOpenAbstract={(name, abstract) => setActiveModal({ name, abstract })}
+        />
       ))}
       
       {totalPages > 1 && (
@@ -113,6 +133,60 @@ export default function ResultsList({ hits, took }: ResultsListProps) {
           </nav>
         </div>
       )}
+
+      {/* Abstract Modal */}
+      {activeModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setActiveModal(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-2xl w-full p-6 space-y-4 relative transition-all transform scale-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                    Profile Abstract
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mt-1">
+                  {activeModal.name}
+                </h3>
+              </div>
+              
+              <button
+                onClick={() => setActiveModal(null)}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg p-1.5 transition-colors"
+                aria-label="Close abstract modal"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="py-2">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 text-slate-800 text-sm leading-relaxed whitespace-pre-line font-normal shadow-inner">
+                {activeModal.abstract}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setActiveModal(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -125,32 +199,47 @@ const hasValue = (v: unknown): boolean => {
   return true;
 };
 
-const ResultItem = ({ hit }: { hit: EsHit }) => {
+const ResultItem = ({ hit, onOpenAbstract }: { hit: EsHit; onOpenAbstract: (name: string, abstract: string) => void }) => {
   const src = (hit._source || {}) as any;
   const fullName = src.name?.trim() || `Freelancer #${hit._id.slice(0, 8)}`;
   const profileUrl = src.url || src.linkedin_url || src.linkedin_profile;
+  const abstractText = src.abstract;
 
   return (
     <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-primary-700">
-            {profileUrl ? (
-              <a 
-                href={profileUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:underline flex items-center gap-2"
+          <div className="flex items-center gap-3 flex-wrap">
+            <h3 className="text-xl font-bold text-primary-700">
+              {profileUrl ? (
+                <a 
+                  href={profileUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:underline flex items-center gap-2"
+                >
+                  {fullName}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              ) : (
+                fullName
+              )}
+            </h3>
+
+            {hasValue(abstractText) && (
+              <button
+                onClick={() => onOpenAbstract(fullName, String(abstractText))}
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 shadow-sm"
               >
-                {fullName}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-              </a>
-            ) : (
-              fullName
+                Abstract
+              </button>
             )}
-          </h3>
+          </div>
           
           {(src.location || src.state) && (
             <div className="text-slate-600 mt-1 flex items-center gap-2">

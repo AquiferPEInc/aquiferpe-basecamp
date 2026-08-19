@@ -41,7 +41,8 @@ async function importData() {
         license: record.license || null,
         state: record.state || null,
         location_name: record.location || null,
-        linkedin_url: record.vanity ? `https://linkedin.com/in/${record.vanity}` : null
+        linkedin_url: record.vanity ? `https://linkedin.com/in/${record.vanity}` : null,
+        abstract: record.abstract || null
       }));
 
       console.log(`Inserting batch ${i} to ${i + batch.length}...`);

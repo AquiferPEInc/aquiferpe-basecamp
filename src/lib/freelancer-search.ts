@@ -57,6 +57,7 @@ export async function searchElasticsearch(query: string, selectedStates: string[
       location: row.location_name,
       state: row.state,
       about: row.about,
+      abstract: row.abstract,
       current_position: row.current_position,
       experience: row.experience,
       license: row.license
