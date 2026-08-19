@@ -300,7 +300,7 @@ const ResultItem = ({ hit, onOpenAbstract }: { hit: EsHit; onOpenAbstract: (name
           <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Position</span>
             <div className="text-sm text-slate-800 mt-1">
-              <ExpandableField value={src.current_position} fieldKey="current_position" highlight={hit.highlight} />
+              <FieldValue value={src.current_position} fieldKey="current_position" highlight={hit.highlight} />
             </div>
           </div>
         )}
@@ -309,7 +309,7 @@ const ResultItem = ({ hit, onOpenAbstract }: { hit: EsHit; onOpenAbstract: (name
           <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">About</span>
             <div className="text-sm text-slate-700 mt-1">
-              <ExpandableField value={src.about || src.summary} fieldKey={src.about ? "about" : "summary"} highlight={hit.highlight} />
+              <FieldValue value={src.about || src.summary} fieldKey={src.about ? "about" : "summary"} highlight={hit.highlight} />
             </div>
           </div>
         )}
