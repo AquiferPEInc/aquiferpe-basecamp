@@ -56,7 +56,7 @@ const FieldValue = ({ value, fieldKey, highlight }: { value: unknown; fieldKey?:
 export default function ResultsList({ hits, took }: ResultsListProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [activeModal, setActiveModal] = useState<AbstractModalData | null>(null)
-  const resultsPerPage = 5
+  const resultsPerPage = 10
   
   useEffect(() => {
     setCurrentPage(1)
@@ -199,11 +199,17 @@ const hasValue = (v: unknown): boolean => {
   return true;
 };
 
+const EXPERIENCE_PREVIEW_LENGTH = 200;
+
 const ResultItem = ({ hit, onOpenAbstract }: { hit: EsHit; onOpenAbstract: (name: string, abstract: string) => void }) => {
   const src = (hit._source || {}) as any;
   const fullName = src.name?.trim() || `Freelancer #${hit._id.slice(0, 8)}`;
   const profileUrl = src.url || src.linkedin_url || src.linkedin_profile;
   const abstractText = src.abstract;
+  const [experienceExpanded, setExperienceExpanded] = useState(false);
+
+  const experiencePlainText = typeof src.experience === 'string' ? src.experience.replace(/_linebreak_/g, '\n') : null;
+  const isExperienceTruncatable = !!experiencePlainText && experiencePlainText.length > EXPERIENCE_PREVIEW_LENGTH;
 
   return (
     <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
@@ -283,8 +289,30 @@ const ResultItem = ({ hit, onOpenAbstract }: { hit: EsHit; onOpenAbstract: (name
             <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Experience</span>
               <div className="text-sm text-slate-800 mt-1">
-                <FieldValue value={src.experience} fieldKey="experience" highlight={hit.highlight} />
+                {isExperienceTruncatable && !experienceExpanded ? (
+                  <span className="whitespace-pre-line">
+                    {experiencePlainText!.slice(0, EXPERIENCE_PREVIEW_LENGTH)}...
+                  </span>
+                ) : (
+                  <FieldValue value={src.experience} fieldKey="experience" highlight={hit.highlight} />
+                )}
               </div>
+              {isExperienceTruncatable && (
+                <button
+                  onClick={() => setExperienceExpanded(e => !e)}
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary-700 hover:text-primary-800"
+                  aria-label={experienceExpanded ? 'Collapse experience' : 'Expand experience'}
+                >
+                  <svg
+                    className={`w-2.5 h-2.5 transition-transform ${experienceExpanded ? 'rotate-180' : ''}`}
+                    viewBox="0 0 10 10"
+                    fill="currentColor"
+                  >
+                    <path d="M1 3l4 4 4-4z" />
+                  </svg>
+                  {experienceExpanded ? 'Show less' : 'Show more'}
+                </button>
+              )}
             </div>
           )}
 
