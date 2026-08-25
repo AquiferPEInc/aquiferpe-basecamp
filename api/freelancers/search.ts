@@ -16,7 +16,9 @@ const API_KEYS: Record<string, { mask: boolean }> = {
 function maskName(name: string | null): string | null {
   if (!name) return name
 
-  return name
+  const truncated = name.split(',')[0]
+
+  return truncated
     .split('')
     .map((char, i) => (i < 4 || !/[a-zA-Z]/.test(char) ? char : '*'))
     .join('')
