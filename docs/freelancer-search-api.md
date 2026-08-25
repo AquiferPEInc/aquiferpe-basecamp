@@ -14,18 +14,20 @@ needing the rest of the profile.
 
 ## Authentication
 
-Requests are authenticated with a single hardcoded API key, sent as the `x-api-key`
-header. There is no per-client key or OAuth flow — treat this key as a shared secret
-between Aquifer PE and the consuming service.
+Requests are authenticated with a hardcoded API key, sent as the `x-api-key` header.
+Multiple keys are accepted — typically one per consuming service — so a single service
+can be revoked without rotating everyone else's key. There is no OAuth flow or per-key
+scoping; each key simply grants full access to this endpoint.
 
-| Header      | Value                                              |
-| ----------- | --------------------------------------------------- |
-| `x-api-key` | `cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1` |
+| Consumer        | `x-api-key` value                                  |
+| ---------------- | --------------------------------------------------- |
+| (existing)        | `cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1` |
+| (new)              | `70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80` |
 
-> **Call this server-side only.** The key is a static bearer secret with no scoping or
-> per-client rotation. Never embed it in browser JavaScript, a mobile app, or any client
-> shipped to end users — if it leaks, anyone can read search results until it's rotated
-> in `api/freelancers/search.ts`.
+> **Call this server-side only.** Each key is a static bearer secret with no scoping or
+> automatic rotation. Never embed a key in browser JavaScript, a mobile app, or any
+> client shipped to end users — if it leaks, anyone can read search results until it's
+> removed from the `API_KEYS` set in `api/freelancers/search.ts`.
 
 ## Request
 
@@ -55,20 +57,23 @@ GET https://www.aquiferpe.com/api/freelancers/search
 
 | Field               | Type            | Description                                                          |
 | ------------------- | --------------- | ---------------------------------------------------------------------- |
-| `results`           | array           | List of matching freelancer records. Empty array if nothing matched — this is not an error. |
+| `results`           | array           | List of matching freelancer records, ordered by `score` descending. Empty array if nothing matched — this is not an error. |
 | `results[].id`      | string (uuid)   | The freelancer record's unique ID.                                    |
 | `results[].abstract`| string \| null  | Freeform abstract text for the record. `null` if the record has no abstract on file. |
+| `results[].score`   | number          | Relevance score for this match against `q` (Postgres `ts_rank_cd`). Higher is more relevant; only meaningful for ordering/comparison within a single response, not across queries. |
 
 ```json
 {
   "results": [
     {
       "id": "7c1e9f2a-9e0e-4b7a-9d3d-6a2f1c9b0e21",
-      "abstract": "Mechanical engineer with 12 years in HVAC systems design..."
+      "abstract": "Mechanical engineer with 12 years in HVAC systems design...",
+      "score": 0.60906
     },
     {
       "id": "1a4d7e88-3c5f-4a11-8e2b-0f9c7d5a44b6",
-      "abstract": null
+      "abstract": null,
+      "score": 0.24309
     }
   ]
 }
@@ -91,7 +96,7 @@ All errors return JSON with an `error` string.
 
 ```bash
 curl "https://www.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&limit=25" \
-  -H "x-api-key: cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1"
+  -H "x-api-key: 70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80"
 ```
 
 ### Node.js (fetch)
@@ -99,7 +104,7 @@ curl "https://www.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&lim
 ```js
 const res = await fetch(
   "https://www.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&limit=25",
-  { headers: { "x-api-key": "cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1" } }
+  { headers: { "x-api-key": "70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80" } }
 );
 const { results } = await res.json();
 ```
@@ -112,7 +117,7 @@ import requests
 resp = requests.get(
     "https://www.aquiferpe.com/api/freelancers/search",
     params={"q": "mechanical engineer", "limit": 25},
-    headers={"x-api-key": "cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1"},
+    headers={"x-api-key": "70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80"},
 )
 results = resp.json()["results"]
 ```
@@ -123,8 +128,8 @@ results = resp.json()["results"]
   database with the internal app.
 - **Pagination** — None. Use `limit` to cap result size; there is no offset/cursor for
   paging deeper into results.
-- **Key rotation** — The key is a hardcoded constant in `api/freelancers/search.ts`.
-  Rotating it requires a code change and redeploy on Aquifer's side — ask before assuming
-  it's stable long-term.
-- **Fields returned** — Intentionally minimal: `id` and `abstract` only. No name, contact
-  info, or other profile fields are exposed by this endpoint.
+- **Key rotation** — Keys are hardcoded in the `API_KEYS` set in
+  `api/freelancers/search.ts`. Adding, removing, or rotating a key requires a code change
+  and redeploy on Aquifer's side — ask before assuming any given key is stable long-term.
+- **Fields returned** — Intentionally minimal: `id`, `abstract`, and `score` only. No
+  name, contact info, or other profile fields are exposed by this endpoint.

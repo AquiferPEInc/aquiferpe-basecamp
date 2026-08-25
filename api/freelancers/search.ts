@@ -6,15 +6,19 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY!
 )
 
-// Hardcoded API key for this public search endpoint.
-const API_KEY = 'cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1'
+// Hardcoded API keys for this endpoint, one per consuming service.
+const API_KEYS = new Set([
+  'cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1',
+  '70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80',
+])
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' })
   }
 
-  if (req.headers['x-api-key'] !== API_KEY) {
+  const apiKey = req.headers['x-api-key']
+  if (typeof apiKey !== 'string' || !API_KEYS.has(apiKey)) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
@@ -37,7 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const results = (data || []).map((row: any) => ({
       id: row.id,
-      abstract: row.abstract
+      abstract: row.abstract,
+      score: row.result_score
     }))
 
     res.status(200).json({ results })
