@@ -1,16 +1,16 @@
 # Freelancer Search API
 
 Internal, unversioned API. A single read-only endpoint for keyword-searching Aquifer's
-freelancer records from another service. Returns only a record ID and its abstract — no
-PII, no contact details.
+freelancer records from another service. Returns a record ID, abstract, location, and a
+partially masked name — no full name, no contact details.
 
 ## Overview
 
 The endpoint runs a full-text keyword search over the internal `freelancer` table (the
 same search used by the Freelancer page in the Aquifer PE app) and returns a lightweight
-result set: just `id` and `abstract` for each match, ranked by relevance. It's meant for
-a consuming service that wants to look up matching freelancer records by keyword without
-needing the rest of the profile.
+result set: `id`, `name` (masked), `location`, and `abstract` for each match, ranked by
+relevance. It's meant for a consuming service that wants to look up matching freelancer
+records by keyword without needing the rest of the profile.
 
 ## Authentication
 
@@ -56,6 +56,8 @@ GET https://basecamp.aquiferpe.com/api/freelancers/search
 | ------------------- | --------------- | ---------------------------------------------------------------------- |
 | `results`           | array           | List of matching freelancer records, ordered by `score` descending. Empty array if nothing matched — this is not an error. |
 | `results[].id`      | string (uuid)   | The freelancer record's unique ID.                                    |
+| `results[].name`    | string \| null  | Freelancer's name, masked: the first 4 letters are left intact and every letter after that is replaced with `*` (non-letter characters, like spaces, are left as-is). `null` if the record has no name on file. |
+| `results[].location`| string \| null  | Freeform location text for the record. `null` if the record has no location on file. |
 | `results[].abstract`| string \| null  | Freeform abstract text for the record. `null` if the record has no abstract on file. |
 | `results[].score`   | number          | Relevance score for this match against `q` (Postgres `ts_rank_cd`). Higher is more relevant; only meaningful for ordering/comparison within a single response, not across queries. |
 
@@ -64,11 +66,15 @@ GET https://basecamp.aquiferpe.com/api/freelancers/search
   "results": [
     {
       "id": "7c1e9f2a-9e0e-4b7a-9d3d-6a2f1c9b0e21",
+      "name": "John *****",
+      "location": "Austin, TX",
       "abstract": "Mechanical engineer with 12 years in HVAC systems design...",
       "score": 0.60906
     },
     {
       "id": "1a4d7e88-3c5f-4a11-8e2b-0f9c7d5a44b6",
+      "name": "Mari* *****",
+      "location": null,
       "abstract": null,
       "score": 0.24309
     }
@@ -128,5 +134,6 @@ results = resp.json()["results"]
 - **Key rotation** — Keys are hardcoded in the `API_KEYS` set in
   `api/freelancers/search.ts`. Adding, removing, or rotating a key requires a code change
   and redeploy on Aquifer's side — ask before assuming any given key is stable long-term.
-- **Fields returned** — Intentionally minimal: `id`, `abstract`, and `score` only. No
-  name, contact info, or other profile fields are exposed by this endpoint.
+- **Fields returned** — Intentionally minimal: `id`, `name` (masked), `location`,
+  `abstract`, and `score` only. No full name, contact info, or other profile fields are
+  exposed by this endpoint.

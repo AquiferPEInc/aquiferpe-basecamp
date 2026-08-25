@@ -12,6 +12,15 @@ const API_KEYS = new Set([
   '70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80',
 ])
 
+function maskName(name: string | null): string | null {
+  if (!name) return name
+
+  return name
+    .split('')
+    .map((char, i) => (i < 4 || !/[a-zA-Z]/.test(char) ? char : '*'))
+    .join('')
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' })
@@ -41,6 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const results = (data || []).map((row: any) => ({
       id: row.id,
+      name: maskName(row.name),
+      location: row.location_name,
       abstract: row.abstract,
       score: row.result_score
     }))
