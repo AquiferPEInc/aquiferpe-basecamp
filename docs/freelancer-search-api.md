@@ -32,11 +32,8 @@ scoping; each key simply grants full access to this endpoint.
 ## Request
 
 ```
-GET https://www.aquiferpe.com/api/freelancers/search
+GET https://basecamp.aquiferpe.com/api/freelancers/search
 ```
-
-> Confirm this is the actual production domain before relying on it — it's inferred from
-> a URL elsewhere in the codebase, not from deploy config.
 
 ### Query parameters
 
@@ -95,7 +92,7 @@ All errors return JSON with an `error` string.
 ### cURL
 
 ```bash
-curl "https://www.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&limit=25" \
+curl "https://basecamp.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&limit=25" \
   -H "x-api-key: 70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80"
 ```
 
@@ -103,7 +100,7 @@ curl "https://www.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&lim
 
 ```js
 const res = await fetch(
-  "https://www.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&limit=25",
+  "https://basecamp.aquiferpe.com/api/freelancers/search?q=mechanical+engineer&limit=25",
   { headers: { "x-api-key": "70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80" } }
 );
 const { results } = await res.json();
@@ -115,7 +112,7 @@ const { results } = await res.json();
 import requests
 
 resp = requests.get(
-    "https://www.aquiferpe.com/api/freelancers/search",
+    "https://basecamp.aquiferpe.com/api/freelancers/search",
     params={"q": "mechanical engineer", "limit": 25},
     headers={"x-api-key": "70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80"},
 )
