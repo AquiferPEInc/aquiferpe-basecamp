@@ -16,7 +16,7 @@ const API_KEYS: Record<string, { mask: boolean }> = {
 function maskName(name: string | null): string | null {
   if (!name) return name
 
-  const truncated = name.split(',')[0]
+  const truncated = name.split(',')[0].split('(')[0]
 
   return truncated
     .split('')
