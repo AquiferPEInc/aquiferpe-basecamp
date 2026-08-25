@@ -7,10 +7,11 @@ const supabase = createClient(
 )
 
 // Hardcoded API keys for this endpoint, one per consuming service.
-const API_KEYS = new Set([
-  'cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1',
-  '70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80',
-])
+// `mask: false` marks a trusted internal consumer that receives the unmasked name.
+const API_KEYS: Record<string, { mask: boolean }> = {
+  'cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1': { mask: false },
+  '70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80': { mask: true },
+}
 
 function maskName(name: string | null): string | null {
   if (!name) return name
@@ -27,7 +28,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const apiKey = req.headers['x-api-key']
-  if (typeof apiKey !== 'string' || !API_KEYS.has(apiKey)) {
+  const keyConfig = typeof apiKey === 'string' ? API_KEYS[apiKey] : undefined
+  if (!keyConfig) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
@@ -50,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const results = (data || []).map((row: any) => ({
       id: row.id,
-      name: maskName(row.name),
+      name: keyConfig.mask ? maskName(row.name) : row.name,
       location: row.location_name,
       abstract: row.abstract,
       score: row.result_score

@@ -2,32 +2,33 @@
 
 Internal, unversioned API. A single read-only endpoint for keyword-searching Aquifer's
 freelancer records from another service. Returns a record ID, abstract, location, and a
-partially masked name — no full name, no contact details.
+name — full or masked depending on the caller's key — no contact details.
 
 ## Overview
 
 The endpoint runs a full-text keyword search over the internal `freelancer` table (the
 same search used by the Freelancer page in the Aquifer PE app) and returns a lightweight
-result set: `id`, `name` (masked), `location`, and `abstract` for each match, ranked by
-relevance. It's meant for a consuming service that wants to look up matching freelancer
-records by keyword without needing the rest of the profile.
+result set: `id`, `name`, `location`, and `abstract` for each match, ranked by relevance.
+It's meant for a consuming service that wants to look up matching freelancer records by
+keyword without needing the rest of the profile.
 
 ## Authentication
 
 Requests are authenticated with a hardcoded API key, sent as the `x-api-key` header.
-Multiple keys are accepted — typically one per consuming service — so a single service
-can be revoked without rotating everyone else's key. There is no OAuth flow or per-key
-scoping; each key simply grants full access to this endpoint.
+Multiple keys are accepted — one per consuming service — so a single service can be
+revoked without rotating everyone else's key. There is no OAuth flow; the only per-key
+setting is whether that consumer receives masked or unmasked names (see below).
 
-| Consumer        | `x-api-key` value                                  |
-| ---------------- | --------------------------------------------------- |
-| (existing)        | `cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1` |
-| (new)              | `70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80` |
+| Consumer               | `x-api-key` value                                  | `name` masking                 |
+| ------------------------ | --------------------------------------------------- | --------------------------------- |
+| (existing, trusted internal) | `cebe645c5ea12e547b5cf1054c6ee84b6e69cb96e8ca87f1` | Unmasked — full name returned |
+| (new, external)              | `70807c940d5c4e3a1b6b2d33583e2971f690b06b08df4b80` | Masked (see [Response](#response)) |
 
 > **Call this server-side only.** Each key is a static bearer secret with no scoping or
 > automatic rotation. Never embed a key in browser JavaScript, a mobile app, or any
-> client shipped to end users — if it leaks, anyone can read search results until it's
-> removed from the `API_KEYS` set in `api/freelancers/search.ts`.
+> client shipped to end users — if it leaks, anyone can read search results (including
+> unmasked names, for a trusted key) until it's removed from the `API_KEYS` map in
+> `api/freelancers/search.ts`.
 
 ## Request
 
@@ -56,7 +57,7 @@ GET https://basecamp.aquiferpe.com/api/freelancers/search
 | ------------------- | --------------- | ---------------------------------------------------------------------- |
 | `results`           | array           | List of matching freelancer records, ordered by `score` descending. Empty array if nothing matched — this is not an error. |
 | `results[].id`      | string (uuid)   | The freelancer record's unique ID.                                    |
-| `results[].name`    | string \| null  | Freelancer's name, masked: the first 4 letters are left intact and every letter after that is replaced with `*` (non-letter characters, like spaces, are left as-is). `null` if the record has no name on file. |
+| `results[].name`    | string \| null  | Freelancer's name. For keys marked "masked" (see [Authentication](#authentication)), the first 4 letters are left intact and every letter after that is replaced with `*` (non-letter characters, like spaces, are left as-is); trusted internal keys receive the name unmasked. `null` if the record has no name on file. |
 | `results[].location`| string \| null  | Freeform location text for the record. `null` if the record has no location on file. |
 | `results[].abstract`| string \| null  | Freeform abstract text for the record. `null` if the record has no abstract on file. |
 | `results[].score`   | number          | Relevance score for this match against `q` (Postgres `ts_rank_cd`). Higher is more relevant; only meaningful for ordering/comparison within a single response, not across queries. |
@@ -131,9 +132,11 @@ results = resp.json()["results"]
   database with the internal app.
 - **Pagination** — None. Use `limit` to cap result size; there is no offset/cursor for
   paging deeper into results.
-- **Key rotation** — Keys are hardcoded in the `API_KEYS` set in
-  `api/freelancers/search.ts`. Adding, removing, or rotating a key requires a code change
-  and redeploy on Aquifer's side — ask before assuming any given key is stable long-term.
-- **Fields returned** — Intentionally minimal: `id`, `name` (masked), `location`,
-  `abstract`, and `score` only. No full name, contact info, or other profile fields are
+- **Key rotation** — Keys are hardcoded in the `API_KEYS` map in
+  `api/freelancers/search.ts`, along with each key's masking setting. Adding, removing,
+  or rotating a key — or changing whether it receives masked names — requires a code
+  change and redeploy on Aquifer's side; ask before assuming any given key is stable
+  long-term.
+- **Fields returned** — Intentionally minimal: `id`, `name` (masked or unmasked per key),
+  `location`, `abstract`, and `score` only. No contact info or other profile fields are
   exposed by this endpoint.
